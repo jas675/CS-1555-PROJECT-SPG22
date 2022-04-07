@@ -28,8 +28,8 @@ CREATE TABLE Station_Line
 (
     rail_id     INTEGER,
     station_id  INTEGER,
-    order_in_line       INTEGER,
     distance_prev INTEGER,
+    order_in_line       INTEGER,
 
     CONSTRAINT station_line_pk
         PRIMARY KEY(rail_id,station_id,order_in_line),
