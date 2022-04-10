@@ -95,7 +95,7 @@ CREATE TABLE TrainSchedule
     train_id          INTEGER,
 
     CONSTRAINT train_schedule_pk
-        PRIMARY KEY schedule_id,
+        PRIMARY KEY (schedule_id),
     CONSTRAINT train_fk
         FOREIGN KEY (train_id)
         REFERENCES Train(train_id)
@@ -125,7 +125,7 @@ CREATE TABLE Passenger
 
 CREATE TABLE Reservation
 (
-    reservation_id INTEGER,
+    reservation_id SERIAL,
     customer_id    INTEGER,
     train_sch_id   INTEGER,
     r_start_time   TIMESTAMP,
@@ -146,7 +146,7 @@ CREATE TABLE Reservation
 
 CREATE TABLE CLOCK(
     clock_date      DATE,
-    clock_time      TIMESTAMP
+    clock_time      TIME
 );
 
 
