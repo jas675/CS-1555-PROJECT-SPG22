@@ -88,13 +88,14 @@ CREATE TABLE Train
 
 CREATE TABLE TrainSchedule
 (
+    schedule_id       INTEGER,
     route_id          INTEGER,
     day               VARCHAR(10),
     time              TIMESTAMP,
     train_id          INTEGER,
 
     CONSTRAINT train_schedule_pk
-        PRIMARY KEY (route_id, day, time, train_id),
+        PRIMARY KEY schedule_id,
     CONSTRAINT train_fk
         FOREIGN KEY (train_id)
         REFERENCES Train(train_id)
