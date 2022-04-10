@@ -1,3 +1,14 @@
+drop table if exists station_line;
+drop table if exists railline;
+drop table if exists station_route;
+drop table if exists station;
+drop table if exists reservation;
+drop table if exists trainschedule;
+drop table if exists route;
+drop table if exists train;
+drop table if exists passenger;
+drop table if exists clock;
+
 CREATE TABLE Station
 (
     station_id  INTEGER,
@@ -91,7 +102,7 @@ CREATE TABLE TrainSchedule
     schedule_id       INTEGER,
     route_id          INTEGER,
     day               VARCHAR(10),
-    time              TIMESTAMP,
+    time              TIME,
     train_id          INTEGER,
 
     CONSTRAINT train_schedule_pk
