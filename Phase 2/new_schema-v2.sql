@@ -140,7 +140,7 @@ CREATE TABLE Reservation
     customer_id    INTEGER,
     train_sch_id   INTEGER,
     r_start_time   TIMESTAMP,
-    rend_time      INTEGER,
+    rend_time      TIMESTAMP,
     ticketed       BOOL,
 
     CONSTRAINT reservation_pk
