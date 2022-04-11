@@ -104,6 +104,7 @@ CREATE TABLE TrainSchedule
     day               VARCHAR(10),
     time              TIME,
     train_id          INTEGER,
+    disruption        BOOL DEFAULT FALSE,
 
     CONSTRAINT train_schedule_pk
         PRIMARY KEY (schedule_id),
@@ -141,7 +142,9 @@ CREATE TABLE Reservation
     train_sch_id   INTEGER,
     r_start_time   TIMESTAMP,
     rend_time      TIMESTAMP,
+    price           FLOAT,
     ticketed       BOOL,
+    no_adjustments BOOL DEFAULT TRUE,
 
     CONSTRAINT reservation_pk
         PRIMARY KEY (reservation_id),
@@ -159,5 +162,4 @@ CREATE TABLE CLOCK(
     clock_date      DATE,
     clock_time      TIME
 );
-
 
