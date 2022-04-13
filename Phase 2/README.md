@@ -5,3 +5,4 @@ We decided to redo signifigant parts of our schema for the second phase of the p
 Some assumptions about the data and the results desired are outlined in comments relative to their respective functions in dml.sql
 * Disruptions happen to a train schedule. In that case, a the original reservation is changed to the new train schedule. If paid, it will stay paid and there is no change in reservation ID. 
 * Since no data was given about the exact dates on the days of the week, hard coded date values were used to aling with teh pseudo-clock
+* A flat-rate is calculated for each route not matter where the passengers' destination is. The price is calculated using the per kilometer rate attribute in train table. 
