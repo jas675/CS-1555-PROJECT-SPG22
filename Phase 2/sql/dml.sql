@@ -27,6 +27,29 @@ DROP VIEW IF EXISTS ranked_trains;
 
 DROP FUNCTION IF EXISTS is_multi_line_route(route_int integer);
 
+DROP FUNCTION IF EXISTS add_passenger(first_name varchar, last_name varchar, street_name varchar, city_name varchar, zip_add varchar);
+DROP FUNCTION IF EXISTS edit_passenger(id integer, first_name varchar, last_name varchar, street_name varchar, city_name varchar, zip_add varchar);
+DROP FUNCTION IF EXISTS view_passenger(id integer, first_name varchar, last_name varchar, street_name varchar, city_name varchar, zip_add varchar);
+DROP FUNCTION IF EXISTS update_clock(year text, month text, day text, hour text, minute text, second text);
+DROP FUNCTION IF EXISTS get_day(times timestamp);
+DROP FUNCTION IF EXISTS day_to_timestamp(day varchar, times time);
+DROP FUNCTION IF EXISTS book_reservation(cust_id integer, tr_sch_id integer);
+DROP FUNCTION IF EXISTS get_ticket(rsv_id integer);
+DROP FUNCTION IF EXISTS display_sch_of_route(id integer);
+DROP FUNCTION IF EXISTS get_table_with_number_of_stops();
+DROP FUNCTION IF EXISTS get_routes_that_stop_xx_stations(percentage integer);
+DROP FUNCTION IF EXISTS get_routes_that_does_not_stop_at_station(stop_st integer);
+DROP FUNCTION IF EXISTS delete_expired_reservation() CASCADE;
+DROP TRIGGER IF EXISTS reservation_cancel ON Clock CASCADE;
+DROP FUNCTION IF EXISTS get_clock_timestamp() CASCADE;
+DROP FUNCTION IF EXISTS change_schedule() CASCADE;
+DROP TRIGGER IF EXISTS line_disruptions ON Trainschedule CASCADE;
+DROP FUNCTION IF EXISTS last_station(route_int integer) CASCADE;
+DROP FUNCTION IF EXISTS get_max_seats(trn_sch integer) CASCADE;
+DROP FUNCTION IF EXISTS get_available_seats(trn_sch_id integer) CASCADE;
+DROP FUNCTION IF EXISTS get_another_train_schedule(trn_sch_id integer) CASCADE;
+
+
 
 --Compute the order of the given station in the given route
 CREATE OR REPLACE FUNCTION order_in_route (route_int integer, station_int integer)
@@ -639,3 +662,397 @@ CREATE OR REPLACE VIEW ranked_trains AS
     JOIN trainschedule t on train.train_id = t.train_id
     GROUP BY train.train_id HAVING COUNT(*) >= 2;
 --SELECT * FROM ranked_trains;
+
+--This adds a new customer by their credentials and returns their primary key
+CREATE OR REPLACE FUNCTION add_passenger ( first_name VARCHAR(20), last_name VARCHAR(30), street_name VARCHAR(50), city_name VARCHAR(30), zip_add VARCHAR(13) )
+RETURNS INTEGER AS
+$$
+    DECLARE
+        id INTEGER;
+    BEGIN
+        SELECT MAX(customer_id) + 1 INTO id FROM Passenger;
+        INSERT INTO Passenger VALUES( id,  first_name, last_name, street_name, city_name, zip_add);
+        RETURN id;
+    END
+$$ LANGUAGE plpgsql;
+
+--Edits the customer information given and returns their id
+CREATE OR REPLACE FUNCTION edit_passenger ( id INTEGER, first_name VARCHAR(20), last_name VARCHAR(30), street_name VARCHAR(50), city_name VARCHAR(30), zip_add VARCHAR(13) )
+RETURNS INTEGER AS
+$$
+    BEGIN
+        IF first_name != '' THEN
+            UPDATE Passenger
+            SET f_name = first_name
+            WHERE customer_id = id;
+        END IF;
+
+        IF last_name != '' THEN
+            UPDATE Passenger
+            SET l_name = last_name
+            WHERE customer_id = id;
+        END IF;
+
+        IF street_name != '' THEN
+            UPDATE Passenger
+            SET street_address = street_name
+            WHERE customer_id = id;
+        END IF;
+
+        IF city_name != '' THEN
+            UPDATE Passenger
+            SET city = city_name
+            WHERE customer_id = id;
+        END IF;
+
+        IF zip_add != '' THEN
+            UPDATE Passenger
+            SET postal_code = zip_add
+            WHERE customer_id = id;
+        END IF;
+
+        RETURN id;
+    END
+$$ LANGUAGE plpgsql;
+
+--Gets the full passenger information based on their credentials / id. Returns table ...checks for similar
+CREATE OR REPLACE FUNCTION view_passenger ( id INTEGER, first_name VARCHAR, last_name VARCHAR, street_name VARCHAR, city_name VARCHAR, zip_add VARCHAR )
+RETURNS TABLE( cust_id INTEGER, fname TEXT, lname TEXT, streetaddress TEXT, cities TEXT, postalcode TEXT ) AS
+$$
+    DECLARE
+        min INTEGER := 0;
+        max INTEGER := 2147483646;
+    BEGIN
+        IF id != 0 THEN
+            min := id;
+            max := id;
+        END IF;
+
+        IF first_name = '' THEN
+            first_name := '^.*$';
+        END IF;
+
+        IF last_name = '' THEN
+            last_name := '^.*$';
+        END IF;
+
+        IF street_name = '' THEN
+            street_name := '^.*$';
+        END IF;
+
+        IF city_name = '' THEN
+            city_name := '^.*$';
+        END IF;
+
+        IF zip_add = '' THEN
+            zip_add := '^.*$';
+        END IF;
+
+        RETURN QUERY(SELECT p.customer_id::INTEGER, p.f_name::TEXT, p.l_name::TEXT, p.street_address::TEXT, p.city::TEXT, p.postal_code::TEXT FROM Passenger p
+        WHERE p.customer_id >= min AND p.customer_id <= max
+        AND p.f_name ~ first_name
+        AND p.l_name ~ last_name
+        AND p.street_address ~ street_name
+        AND p.city ~ city_name
+        AND p.postal_code ~ zip_add);
+
+    END
+$$ LANGUAGE plpgsql;
+
+--Gets the last station of a route
+CREATE OR REPLACE FUNCTION last_station (route_int integer)
+RETURNS INTEGER AS
+$$
+    SELECT station_id
+    FROM station_route
+    WHERE route_int = route_id
+    ORDER BY order_in_route DESC
+    LIMIT 1;
+
+$$ LANGUAGE SQL;
+
+
+--Gets the max number of seats in a train given the train schdule
+CREATE OR REPLACE FUNCTION get_max_seats ( trn_sch INTEGER)
+RETURNS INTEGER AS
+$$
+    DECLARE
+        tr_id INTEGER;
+        rtn_val INTEGER;
+    BEGIN
+
+        SELECT train_id INTO tr_id FROM Trainschedule WHERE schedule_id = trn_sch;
+
+        SELECT num_seats INTO rtn_val FROM Train WHERE train_id = tr_id;
+
+        RETURN rtn_val;
+
+    END;
+
+$$ LANGUAGE plpgsql;
+
+--Calcualtes the avaibale seats of a train given the train schedule
+CREATE OR REPLACE FUNCTION get_available_seats ( trn_sch_id INTEGER )
+RETURNS INTEGER AS
+$$
+        SELECT get_max_seats(trn_sch_id) - COUNT(*)  FROM Reservation WHERE train_sch_id = trn_sch_id LIMIT 1;
+
+$$ LANGUAGE SQL;
+
+
+--Generates another train schdule given a train schdule id
+CREATE OR REPLACE FUNCTION get_another_train_schedule( trn_sch_id INTEGER)
+RETURNS INTEGER AS
+$$
+    DECLARE
+        rt_id INTEGER;
+        return_id INTEGER;
+
+    BEGIN
+        SELECT route_id INTO rt_id FROM trainschedule where schedule_id = trn_sch_id;
+        SELECT schedule_id INTO return_id FROM trainschedule
+        WHERE schedule_id != trn_sch_id AND route_id = rt_id LIMIT 1;
+
+        IF return_id IS NULL THEN
+            RETURN -1;
+        ELSE
+            RETURN return_id;
+        END IF;
+
+
+
+    END;
+
+$$ LANGUAGE plpgsql;
+
+--Set clock
+CREATE OR REPLACE FUNCTION update_clock ( year TEXT, month TEXT, day TEXT, hour TEXT, minute TEXT, second TEXT )
+RETURNS TIMESTAMP AS
+$$
+    DECLARE
+        count INTEGER := 0;
+    BEGIN
+
+        SELECT COUNT(*) INTO count FROM CLOCK;
+
+        IF count = 0 THEN
+            INSERT INTO clock VALUES((year || month || day)::date, (hour || minute || second)::time);
+        ELSE
+            UPDATE clock
+            SET clock_date = (year || month || day)::date, clock_time = (hour || minute || second)::time
+            WHERE TRUE;
+        END IF;
+
+        RETURN TO_TIMESTAMP( year || '-' || month || '-'|| day || ' ' || hour || ':' || minute || ':' || second , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+
+    END
+$$ LANGUAGE plpgsql;
+
+--Helper Method that gets the day based on the timestamp - Full week name
+CREATE OR REPLACE FUNCTION get_day ( times TIMESTAMP)
+RETURNS VARCHAR(10) AS
+$$
+    DECLARE
+        day INTEGER;
+    BEGIN
+
+        SELECT EXTRACT(DOW FROM times) INTO day;
+
+        IF day = 0 THEN
+            RETURN 'Sunday'::VARCHAR(10);
+        ELSEIF day = 1 THEN
+            RETURN 'Monday'::VARCHAR(10);
+        ELSEIF day = 2 THEN
+            RETURN 'Tuesday'::VARCHAR(10);
+        ELSEIF day = 3 THEN
+            RETURN 'Wednesday'::VARCHAR(10);
+        ELSEIF day = 4 THEN
+            RETURN 'Thursday'::VARCHAR(10);
+        ELSEIF day = 5 THEN
+            RETURN 'Friday'::VARCHAR(10);
+        ELSE
+            RETURN 'Saturday'::VARCHAR(10);
+        END IF;
+
+    END;
+$$ LANGUAGE plpgsql;
+
+--Converts a given day to a fixed date and given time
+CREATE OR REPLACE FUNCTION day_to_timestamp ( day VARCHAR(10), times TIME)
+RETURNS TIMESTAMP AS
+$$
+    BEGIN
+
+        IF day = 'Sunday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-24' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSEIF day = 'Monday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-25' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSEIF day = 'Tuesday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-26' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSEIF day = 'Wednesday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-27' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSEIF day = 'Thursday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-28' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSEIF day = 'Friday' THEN
+            RETURN TO_TIMESTAMP( '2022-04-29' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        ELSE
+            RETURN TO_TIMESTAMP( '2022-04-20' || ' ' || times::TEXT , 'YYYY-MM-DD HH24:MI:SS')::TIMESTAMP;
+        END IF;
+
+    END;
+
+$$ LANGUAGE plpgsql;
+
+--Puts in a Reservation that is not yet tickted
+CREATE OR REPLACE FUNCTION book_reservation ( cust_id INTEGER, tr_sch_id INTEGER)
+RETURNS INTEGER AS
+$$
+    DECLARE
+        sch_start_time TIMESTAMP;
+        sch_end_time TIMESTAMP;
+        rsv_id INTEGER;
+        price FLOAT;
+    BEGIN
+        SELECT day_to_timestamp( day, time) INTO sch_start_time FROM TrainSchedule WHERE schedule_id = tr_sch_id;
+        SELECT MAX(sch_start_time) - INTERVAL '2 hour' INTO sch_end_time;
+        SELECT route_cost(route_id, train_cost(train_id), first_station(route_id), last_station(route_id)) INTO price
+        FROM Trainschedule;
+
+        IF get_available_seats( tr_sch_id ) > 0 THEN
+            INSERT INTO Reservation VALUES( DEFAULT, cust_id, tr_sch_id, sch_start_time, sch_end_time, price ,FALSE );
+
+            SELECT reservation_id INTO rsv_id FROM Reservation WHERE customer_id = cust_id AND train_sch_id = tr_sch_id
+            AND r_start_time = sch_start_time AND rend_time = sch_end_time;
+
+            RETURN rsv_id;
+        ELSE
+            RETURN -1;
+        END IF;
+
+    END;
+
+$$  LANGUAGE plpgsql;
+
+--Gets the ticket for the reservation given the reservation id
+CREATE OR REPLACE FUNCTION get_ticket ( rsv_id INTEGER)
+RETURNS VOID AS
+$$
+    BEGIN
+        UPDATE Reservation
+        SET ticketed = TRUE
+        WHERE reservation_id = rsv_id;
+    END;
+
+$$ LANGUAGE plpgsql;
+
+--Method that shows the schdule of a route given the route id
+CREATE OR REPLACE FUNCTION display_sch_of_routes ( id INTEGER )
+RETURNS TABLE( sch_id INTEGER, days VARCHAR(10), hours TIME, tr_id INTEGER, tr_name VARCHAR(30), dscrptn VARCHAR(100)) AS
+$$
+    BEGIN
+
+        RETURN QUERY(SELECT routes.schedule_id, routes.day, routes.time, train.train_id, name, description
+        FROM (SELECT schedule_id, day, time, train_id
+        FROM TrainSchedule
+        WHERE route_id = id) AS routes INNER JOIN Train ON routes.train_id = train.train_id);
+
+
+    END;
+$$ LANGUAGE plpgsql;
+
+--Method that gets the routes that stop at a certain percent stations
+CREATE OR REPLACE FUNCTION get_routes_that_stop_xx_stations( percentage INTEGER)
+RETURNS TABLE ( rt_id INTEGER, trues INTEGER) AS
+$$
+    BEGIN
+        RETURN QUERY (SELECT final.route_id, final.percent::INTEGER
+        FROM (SELECT total.route_id AS route_id, (trues.trues / total.total) * 100 AS percent
+        FROM (SELECT sr.route_id, COUNT(*) * 1.0 AS total FROM ROUTE
+        RIGHT OUTER JOIN Station_route sr
+        ON Route.route_id = sr.route_id
+        GROUP BY sr.route_id) total INNER JOIN (SELECT sr.route_id, COUNT(*) * 1.0 AS trues FROM ROUTE
+        RIGHT OUTER JOIN Station_route sr
+        ON Route.route_id = sr.route_id
+        WHERE is_stop = true
+        GROUP BY sr.route_id) trues ON total.route_id = trues.route_id) final
+        WHERE percent >= percentage);
+
+    END;
+$$ LANGUAGE plpgsql;
+
+--Get s the train that do not stop at a certain station given staion id
+CREATE OR REPLACE FUNCTION get_routes_that_does_not_stop_at_station( stop_st INTEGER)
+RETURNS TABLE ( tr_id INTEGER, nme VARCHAR(30), dcrp VARCHAR(100)) AS
+$$
+    BEGIN
+
+        RETURN QUERY (SELECT train_id, name::VARCHAR(30), description::VARCHAR(100)
+        FROM ( SELECT train.train_id, train.name, train.description, t.route_id
+        FROM Train LEFT OUTER JOIN trainschedule t ON train.train_id = t.train_id ) A
+        LEFT OUTER JOIN station_route ON station_route.route_id = A.route_id
+        WHERE station_id = stop_st AND is_stop = FALSE);
+    END;
+$$ LANGUAGE plpgsql;
+
+--Trigger reservation_cancel and helper methods
+CREATE OR REPLACE FUNCTION get_clock_timestamp()
+RETURNS TIMESTAMP AS
+$$
+    DECLARE
+        times TIMESTAMP;
+    BEGIN
+        SELECT (clock_date || ' ' || clock_time)::TIMESTAMP INTO times FROM clock;
+        RETURN times;
+    end;
+$$ LANGUaGE plpgsql;
+
+CREATE OR REPLACE FUNCTION delete_expired_reservation()
+RETURNS TRIGGER AS
+$$
+BEGIN
+  DELETE FROM Reservation WHERE get_clock_timestamp() > reservation.rend_time AND ticketed = false;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER reservation_cancel
+    AFTER UPDATE ON clock
+    EXECUTE PROCEDURE delete_expired_reservation();
+
+--Trigger line disruptions and helper methods
+CREATE OR REPLACE FUNCTION change_schedule()
+RETURNS TRIGGER AS
+$$
+    DECLARE
+        sch_start_time TIMESTAMP;
+        sch_end_time TIMESTAMP;
+        prices FLOAT;
+
+    BEGIN
+        IF get_another_train_schedule(NEW.schedule_id) != -1 THEN
+            SELECT day_to_timestamp( day, time) INTO sch_start_time FROM TrainSchedule WHERE schedule_id = New.schedule_id;
+            SELECT MAX(sch_start_time) - INTERVAL '2 hour' INTO sch_end_time;
+            SELECT route_cost(NEW.route_id, train_cost(NEW.train_id), first_station(NEW.route_id), last_station(NEW.route_id))
+            INTO prices FROM Trainschedule;
+
+            UPDATE Reservation SET train_sch_id = get_another_train_schedule(NEW.schedule_id), r_start_time = sch_start_time, rend_time = sch_end_time, price = prices
+            WHERE no_adjustments = FALSE AND train_sch_id = NEW.schedule_id;
+        ELSE
+            DELETE FROM Reservation WHERE no_adjustments = FALSE AND train_sch_id = NEW.schedule_id;
+        END IF;
+
+      RETURN NULL;
+    END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER line_disruptions
+    AFTER UPDATE ON Trainschedule
+    FOR EACH ROW
+        WHEN (NEW.disruption = TRUE)
+    EXECUTE FUNCTION change_schedule();
+
+---
+
+
+
+
