@@ -49,8 +49,7 @@ public class Program {
         String adminList = "Administrator Access Options\n"
                         + "16) Export Database\n"
                         + "17) Delete Database\n"
-                        + "18) Update Clock\n"
-                        + "19) Query\n\n";
+                        + "18) Update Clock\n\n";
  
         
  
@@ -86,7 +85,6 @@ public class Program {
             else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub
             else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub
             else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub
-            else if ( admin && input.equals("19") ) { updateCustomerList(); }///Stub
             else
             {
                 System.out.println("Invalid Input! Enter a number in the list provided. Try Again. ");
