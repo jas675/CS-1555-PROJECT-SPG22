@@ -49,8 +49,7 @@ public class Program {
         String adminList = "Administrator Access Options\n"
                         + "16) Export Database\n"
                         + "17) Delete Database\n"
-                        + "18) Update Clock\n"
-                        + "19) Query\n\n";
+                        + "18) Update Clock\n\n";
  
         
  
@@ -81,12 +80,11 @@ public class Program {
             else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
             else if ( input.equals("12") ) { pass_through_percent_stations(); }
             else if ( input.equals("13") ) { display_route_schedule(); }
-            else if ( input.equals("14") ) { availability(); } //In Progress (A)??
-            else if ( input.equals("15") ) { loginScreen(); } //DONE
-            else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub -- J
-            else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub -- J
-            else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub -- J
-            else if ( admin && input.equals("19") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("14") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("15") ) { loginScreen();; }
+            else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub
+            else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub
+            else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub
             else
             {
                 System.out.println("Invalid Input! Enter a number in the list provided. Try Again. ");
