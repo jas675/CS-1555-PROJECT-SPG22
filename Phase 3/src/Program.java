@@ -1,7 +1,13 @@
 import java.util.Properties;
 import java.sql.*;
 import java.util.Scanner;
- 
+
+import java.text.ParseException;
+
+import java.text.DateFormat;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+
 public class Program {
 
     public static Connection conn;
@@ -9,7 +15,7 @@ public class Program {
     public static Scanner scanner;
 
     public static void main(String args[]) throws
-            SQLException, ClassNotFoundException {
+            SQLException, ClassNotFoundException, ParseException {
  
         
  
@@ -17,7 +23,7 @@ public class Program {
         String url = "jdbc:postgresql://localhost:5432/";
         Properties props = new Properties();
         props.setProperty("user", "postgres");
-        props.setProperty("password", "postgres");
+        props.setProperty("password", "postgres"); 
         conn = DriverManager.getConnection(url, props);
 
         System.out.println("Connected to SWL");
@@ -63,13 +69,13 @@ public class Program {
             input = scanner.nextLine();
 
             if ( input.equals("1")) { updateCustomerList(); }
-            else if ( input.equals("2") ) { updateCustomerList(); }///Stub
-            else if ( input.equals("3") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("2") ) { single_route_trip(); }
+            else if ( input.equals("3") ) { multi_route_trip(); }
             else if ( input.equals("4") ) { add_reservation(); }
             else if ( input.equals("5") ) { ticket(); }
-            else if ( input.equals("6") ) { updateCustomerList(); }///Stub
-            else if ( input.equals("7") ) { updateCustomerList(); }///Stub
-            else if ( input.equals("8") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("6") ) { at_station(); }
+            else if ( input.equals("7") ) { multi_line_routes(); }
+            else if ( input.equals("8") ) { ranked_trains(); }
             else if ( input.equals("9") ) { updateCustomerList(); }///Stub
             else if ( input.equals("10") ) { updateCustomerList(); }///Stub
             else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
@@ -87,10 +93,527 @@ public class Program {
                 continue;
             }
 
-            //keyboard.close();
+            System.out.println("\n (done; press enter to continue)");
+            scanner.nextLine();
+            System.out.println("\n\n\n\n");
+             
         }
 
     }
+
+    public static void single_route_trip()throws SQLException, ClassNotFoundException
+    {
+        System.out.print("What day of the week?: ");
+        String day = scanner.nextLine();
+        day = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+
+        System.out.print("Enter departure stop #: ");
+        int id1 = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Enter destination stop #: ");
+        int id2 = Integer.parseInt(scanner.nextLine());
+        
+        System.out.println("How would you like the data ordered?");
+        System.out.println(" 1) By # stations");
+        System.out.println(" 2) By # stops");
+        System.out.println(" 3) By time on route");
+        System.out.println(" 4) By cost");
+
+        int selection = Integer.parseInt(scanner.nextLine());
+
+        CallableStatement call;
+
+        if(selection == 1){
+
+            //Set up call
+            call = conn.prepareCall("{ call single_route_num_stations( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int train_id = result.getInt(2);
+                    int num_stations = result.getInt(3);
+                    System.out.println("Route #"+route_id + " on train #" + train_id + "... num stations = "+num_stations);
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }
+        else if(selection == 2){
+
+            //Set up call
+            call = conn.prepareCall("{ call single_route_num_stops( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int train_id = result.getInt(2);
+                    int num_stops = result.getInt(3);
+                    System.out.println("Route #"+route_id + " on train #" + train_id + "... num stops = "+num_stops);
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else if(selection == 3){
+            //Set up call
+            call = conn.prepareCall("{ call single_route_time( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int train_id = result.getInt(2);
+                    float time = result.getFloat(3);
+                    System.out.println("Route #"+route_id + " on train #" + train_id + "... time = "+time+" hours");
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else if(selection == 4){
+
+            //Set up call
+            call = conn.prepareCall("{ call single_route_cost( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int train_id = result.getInt(2);
+                    float cost = result.getFloat(3);
+                    System.out.println("Route #"+route_id + " on train #" + train_id + "... cost = $"+cost);
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else{
+            System.out.println("Input invalid, exiting function...");
+        }
+    }
+
+    public static void multi_route_trip()throws SQLException, ClassNotFoundException
+    {
+        System.out.print("What day of the week?: ");
+        String day = scanner.nextLine();
+        day = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+
+        System.out.print("Enter departure stop #: ");
+        int id1 = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("Enter destination stop #: ");
+        int id2 = Integer.parseInt(scanner.nextLine());
+        
+        System.out.println("How would you like the data ordered?");
+        System.out.println(" 1) By # stations");
+        System.out.println(" 2) By # stops");
+        System.out.println(" 3) By time on route");
+        System.out.println(" 4) By cost");
+
+        int selection = Integer.parseInt(scanner.nextLine());
+
+        CallableStatement call;
+
+        if(selection == 1){
+
+            //Set up call
+            call = conn.prepareCall("{ call multi_route_num_stations( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int route_id2 = result.getInt(2);
+                    int switch_station = result.getInt(3);
+                    int train_id = result.getInt(4);
+                    int train_id2 = result.getInt(5);
+                    int num_stations = result.getInt(6);
+                    System.out.println("START: Route #"+route_id + " on train #" + train_id);
+                    System.out.println(" THEN: Switch via station #"+switch_station);
+                    System.out.println(" THEN: Route #"+route_id2 + " on train #" + train_id2); 
+                    System.out.println(" (This route passes through "+num_stations + " stations.)\n");
+
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }
+        else if(selection == 2){
+
+            //Set up call
+            call = conn.prepareCall("{ call multi_route_num_stops( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int route_id2 = result.getInt(2);
+                    int switch_station = result.getInt(3);
+                    int train_id = result.getInt(4);
+                    int train_id2 = result.getInt(5);
+                    int num_stops= result.getInt(6);
+                    System.out.println("START: Route #"+route_id + " on train #" + train_id);
+                    System.out.println(" THEN: Switch via station #"+switch_station);
+                    System.out.println(" THEN: Route #"+route_id2 + " on train #" + train_id2); 
+                    System.out.println(" (This route passes through "+num_stops + " stops.)\n");
+
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else if(selection == 3){
+            
+            //Set up call
+            call = conn.prepareCall("{ call multi_route_time( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int route_id2 = result.getInt(2);
+                    int switch_station = result.getInt(3);
+                    int train_id = result.getInt(4);
+                    int train_id2 = result.getInt(5);
+                    float time = result.getFloat(6);
+                    System.out.println("START: Route #"+route_id + " on train #" + train_id);
+                    System.out.println(" THEN: Switch via station #"+switch_station);
+                    System.out.println(" THEN: Route #"+route_id2 + " on train #" + train_id2); 
+                    System.out.println(" (You will spend "+time + " hours travelling on these routes.)\n");
+
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else if(selection == 4){
+
+            //Set up call
+            call = conn.prepareCall("{ call multi_route_cost( ?, ?, ? ) }");
+            call.setString(1, day);
+            call.setInt(2,id1);
+            call.setInt(3,id2);
+
+            //Execute
+            ResultSet result = call.executeQuery();
+
+            //Ensure result set not empty
+            if (!result.next()) { 
+                System.out.println("No routes found!"); 
+            } else {
+                int count = 0;
+                String ans = "";
+                System.out.println("---------------------------------------------------");
+
+                //For each record
+                do{
+                    int route_id = result.getInt(1);
+                    int route_id2 = result.getInt(2);
+                    int switch_station = result.getInt(3);
+                    int train_id = result.getInt(4);
+                    int train_id2 = result.getInt(5);
+                    float cost = result.getFloat(6);
+                    System.out.println("START: Route #"+route_id + " on train #" + train_id);
+                    System.out.println(" THEN: Switch via station #"+switch_station);
+                    System.out.println(" THEN: Route #"+route_id2 + " on train #" + train_id2); 
+                    System.out.println(" (Route cost = $"+cost + "\n");
+
+                    
+                    count++;
+
+                    //Paginate
+                    if(count >= 10){
+                        System.out.println("---------------------------------------------------");
+                        System.out.print("(press enter to display next page, or q then enter to stop)");
+                        ans = scanner.nextLine();
+                        count = 0;
+                        if(ans.equals("q")){
+                            break;
+                        }
+                        System.out.println("---------------------------------------------------");
+                        
+                    }
+                }  while(result.next());
+            }
+
+        }else{
+            System.out.println("Input invalid, exiting function...");
+        }
+    }
+
+    public static void at_station() throws SQLException, ClassNotFoundException, ParseException
+    {
+        
+        System.out.print("Enter station #: ");
+        int id = Integer.parseInt(scanner.nextLine());
+
+        System.out.print("On what day of the week?: ");
+        String day = scanner.nextLine();
+        day = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+
+        
+        DateFormat format = new SimpleDateFormat("HH:mm");
+
+        java.sql.Time time1;
+        java.sql.Time time2;
+
+        System.out.print("Enter start time in 24-hour format: <HH:mm> : ");
+        try{
+            time1 = new java.sql.Time(format.parse(scanner.nextLine()).getTime());
+        }catch(Exception e){
+            System.out.println("Invalid Input..!  Returning to menu...");
+            return;
+        }
+
+        System.out.print("Enter end time in 24-hour format: <HH:mm> : ");
+        try{
+            time2 = new java.sql.Time(format.parse(scanner.nextLine()).getTime());
+        }catch(Exception e){
+            System.out.println("Invalid Input..!  Returning to menu...");
+            return;
+        }
+
+        CallableStatement call;
+
+        //Set up call
+        call = conn.prepareCall("{ call trains_at_station( ?, ?, ?, ? ) }");
+        call.setInt(1, id);
+        call.setString(2,day);
+        call.setTime(3,time1);
+        call.setTime(4,time2);
+
+        System.out.println(call);
+
+        //Execute
+        ResultSet result = call.executeQuery();
+
+         if (!result.next()) { 
+                System.out.println("No trains found!"); 
+            } else {
+
+                //For each record
+                do{
+                    int train_id = result.getInt(1);
+                    String time = result.getString(4);
+                    System.out.println("Train #"+train_id + " will be here ~"+time);
+                    
+                }  while(result.next());
+            }
+    }
+
+    public static void multi_line_routes() throws SQLException, ClassNotFoundException{
+        String sql = "SELECT * FROM multi_line_routes";
+        Statement st = conn.createStatement();
+        ResultSet result = st.executeQuery(sql);
+
+        System.out.println("The following routes traverse multiple lines:");
+         while(result.next()){
+            int route_id = result.getInt(1);
+            System.out.println(" -- Route #"+route_id);
+        }
+    }
+
+    public static void ranked_trains() throws SQLException, ClassNotFoundException{
+        String sql = "SELECT * FROM ranked_trains";
+        Statement st = conn.createStatement();
+        ResultSet result = st.executeQuery(sql);
+
+        System.out.println("Train ranking (by # of routes)");
+         while(result.next()){
+            int train_id = result.getInt(1);
+            int route = result.getInt(2);
+            int rank = result.getInt(3);
+            System.out.println(" #"+rank+") Train #"+train_id + " with "+route+" routes.");
+        }
+    }
+
 
     public static void trains_that_does_not_stop_at_station()  throws SQLException, ClassNotFoundException
     {
@@ -429,7 +952,7 @@ public class Program {
 
         //Define administrator username and password
         String username = "admin";
-        String password = "password";
+        String password = "root";
 
         //Define employee username and password
         String employeeUsername = "employee";
