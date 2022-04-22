@@ -74,18 +74,18 @@ public class Program {
             else if ( input.equals("4") ) { add_reservation(); }
             else if ( input.equals("5") ) { ticket(); }
             else if ( input.equals("6") ) { at_station(); }
-            else if ( input.equals("7") ) { multi_line_routes(); }
+            else if ( input.equals("7") ) { multi_line_routes(); } 
             else if ( input.equals("8") ) { ranked_trains(); }
-            else if ( input.equals("9") ) { updateCustomerList(); }///Stub
-            else if ( input.equals("10") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("9") ) { same_station_diff_stops(); } //In Progress (A)??
+            else if ( input.equals("10") ) { updateCustomerList(); }///Stub -- J
             else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
             else if ( input.equals("12") ) { pass_through_percent_stations(); }
             else if ( input.equals("13") ) { display_route_schedule(); }
-            else if ( input.equals("14") ) { updateCustomerList(); }///Stub
-            else if ( input.equals("15") ) { loginScreen();; }
-            else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub
-            else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub
-            else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub
+            else if ( input.equals("14") ) { availability(); } //In Progress (A)??
+            else if ( input.equals("15") ) { loginScreen(); } //DONE
+            else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub -- J
+            else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub -- J
+            else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub -- J
             else if ( admin && input.equals("19") ) { updateCustomerList(); }///Stub
             else
             {
@@ -569,7 +569,7 @@ public class Program {
         call.setTime(3,time1);
         call.setTime(4,time2);
 
-        System.out.println(call);
+        //System.out.println(call);
 
         //Execute
         ResultSet result = call.executeQuery();
@@ -583,6 +583,88 @@ public class Program {
                     int train_id = result.getInt(1);
                     String time = result.getString(4);
                     System.out.println("Train #"+train_id + " will be here ~"+time);
+                    
+                }  while(result.next());
+            }
+    }
+
+
+    public static void same_station_diff_stops() throws SQLException, ClassNotFoundException{
+        System.out.print("Enter route #: ");
+        int id = Integer.parseInt(scanner.nextLine());
+
+        CallableStatement call;
+
+        call = conn.prepareCall("{ call pass_same_stop_not_same( ? ) }");
+        call.setInt(1, id);
+
+        ResultSet result = call.executeQuery();
+
+         if (!result.next()) { 
+                System.out.println("No routes with identical stations / different stops found for this route!"); 
+        } else {
+
+            //For each record
+            do{
+                int route_id = result.getInt(1);
+                System.out.println("Route #"+route_id + " shares its stations (but not stops) with "+id);
+                
+            }  while(result.next());
+        }
+    }
+
+    public static void availability() throws SQLException, ClassNotFoundException, ParseException{
+        System.out.print("What day of the week?: ");
+        String day = scanner.nextLine();
+        day = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+
+        
+        DateFormat format = new SimpleDateFormat("HH:mm");
+
+        java.sql.Time time1;
+        java.sql.Time time2;
+
+        System.out.print("Enter start time in 24-hour format: <HH:mm> : ");
+        try{
+            time1 = new java.sql.Time(format.parse(scanner.nextLine()).getTime());
+        }catch(Exception e){
+            System.out.println("Invalid Input..!  Returning to menu...");
+            return;
+        }
+
+        System.out.print("Enter end time in 24-hour format: <HH:mm> : ");
+        try{
+            time2 = new java.sql.Time(format.parse(scanner.nextLine()).getTime());
+        }catch(Exception e){
+            System.out.println("Invalid Input..!  Returning to menu...");
+            return;
+        }
+
+        CallableStatement call;
+
+        //Set up call
+        call = conn.prepareCall("{ call find_availability (?, ?, ?) }");
+        call.setString(1,day);
+        call.setTime(2,time1);
+        call.setTime(3,time2);
+
+        //System.out.println(call);
+
+        //Execute
+        ResultSet result = call.executeQuery();
+
+         if (!result.next()) { 
+                System.out.println("Input data invalid!  No data found."); 
+            } else {
+                System.out.println("The following stations will have a train available within the given time range: ");
+                //For each record
+                do{
+                    int station_id = result.getInt(1);
+                    boolean available = result.getBoolean(2);
+                    if(available){
+                        System.out.println("Station #"+station_id);
+                    }
+                    
                     
                 }  while(result.next());
             }
