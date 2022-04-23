@@ -83,7 +83,7 @@ public class Program {
                 else if ( input.equals("6") ) { at_station(); }
                 else if ( input.equals("7") ) { multi_line_routes(); } 
                 else if ( input.equals("8") ) { ranked_trains(); }
-                else if ( input.equals("9") ) { same_station_diff_stops(); } //In Progress (A)??
+                else if ( input.equals("9") ) { same_station_diff_stops(); }
                 else if ( input.equals("10") ) { station_all_trains_pass_through(); }
                 else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
                 else if ( input.equals("12") ) { pass_through_percent_stations(); }
@@ -579,7 +579,7 @@ public class Program {
     {
         System.out.println("Printing the stations that all trains pass through\n");
 
-        CallableStatement properCase = conn.prepareCall("{ call get_routes_that_does_not_stop_at_station() }");
+        CallableStatement properCase = conn.prepareCall("{ call station_all_pass() }");
 
         ResultSet rReturn = properCase.executeQuery();
 
