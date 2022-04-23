@@ -328,7 +328,7 @@ public class Program {
 
                     id = res1.getInt(1);
 
-                    System.out.printf("%s", "" + id);
+                    System.out.printf("%s", "" + id + "\n");
                     count++;
 
                     if ( count == 10 )
@@ -545,7 +545,7 @@ public class Program {
                     day = res1.getString(3);
                     time = res1.getTime(4);
                     tr_id =  res1.getInt(5);
-                    disruption = res1.getBoolean(7);
+                    disruption = res1.getBoolean(6);
                     System.out.printf("%-6s %-6s %-10s %-12s %-6s %s %n", "" + id , "" + rt_id, day, "" + time, "" + tr_id, "" + disruption);
                     count++;
 
