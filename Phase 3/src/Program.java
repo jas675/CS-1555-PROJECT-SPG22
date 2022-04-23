@@ -1,4 +1,8 @@
 import java.util.Properties;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.Scanner;
 
@@ -14,7 +18,7 @@ public class Program {
     public static Scanner scanner;
 
     public static void main(String args[]) throws
-            SQLException, ClassNotFoundException, ParseException {
+            SQLException, ClassNotFoundException, ParseException, IOException {
  
         //JBDC basic procedures
         Class.forName("org.postgresql.Driver");
@@ -23,6 +27,8 @@ public class Program {
         props.setProperty("user", "postgres");
         props.setProperty("password", "postgres"); 
         conn = DriverManager.getConnection(url, props);
+
+        importData();
 
         //Initlizing the main options list varibales
         String commonList = "\nWelcome to the Costa Train Program.\n"
@@ -46,7 +52,8 @@ public class Program {
                         + "16) Export Database\n"
                         + "17) Delete Database\n"
                         + "18) Update Clock\n"
-                        + "19) Trigger 2 Test\n\n";
+                        + "19) Trigger 2 Test"
+                        + "20) Import Data\n\n";
  
         
         //Initializes scanner to be used by whole program
@@ -82,12 +89,13 @@ public class Program {
                 else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
                 else if ( input.equals("12") ) { pass_through_percent_stations(); }
                 else if ( input.equals("13") ) { display_route_schedule(); }
-                else if ( input.equals("14") ) { availability(); }///Stub
+                else if ( input.equals("14") ) { availability(); }
                 else if ( input.equals("15") ) { loginScreen();; }
                 else if ( admin && input.equals("16") ) { export(); }
                 else if ( admin && input.equals("17") ) { dropAll(); }
                 else if ( admin && input.equals("18") ) { update_clock(); }
                 else if ( admin && input.equals("19") ) { triggerTest(); }
+                else if ( admin && input.equals("20") ) { importData(); }
                 else
                 {
                     System.out.println("Invalid Input! Enter a number in the list provided. Try Again. ");
@@ -106,6 +114,28 @@ public class Program {
             }
         }
 
+    }
+
+    public static void importData() throws SQLException, ClassNotFoundException, IOException
+    {
+
+        System.out.println("Able to import data from appropriate files in repository");
+
+        String create_table = new String(Files.readAllBytes( Paths.get("../Phase 3/new_schema-v2.sql")));
+        String run_functions = new String(Files.readAllBytes( Paths.get("../Phase 3/revised_dml.sql")));
+        String inserts = new String(Files.readAllBytes( Paths.get("../Phase 3/data2.sql")));
+
+        Statement stmt = conn.createStatement();	
+
+        
+        stmt.executeUpdate(create_table);
+        System.out.println("Creating Tables....DONE");
+
+        stmt.executeUpdate(run_functions);
+        System.out.println("Defining Functions.....DONE");
+
+        stmt.executeUpdate(inserts);
+        System.out.println("Adding Data.....DONE");
     }
 
     public static void triggerTest() throws SQLException, ClassNotFoundException
