@@ -27,8 +27,6 @@ public class Program {
         props.setProperty("password", "postgres"); 
         conn = DriverManager.getConnection(url, props);
 
-        importData();
-
         //Initlizing the main options list varibales
         String commonList = "\nWelcome to the Costa Train Program.\n"
                         + "Select a number from the options below.\n"
@@ -51,7 +49,7 @@ public class Program {
                         + "16) Export Database\n"
                         + "17) Delete Database\n"
                         + "18) Update Clock\n"
-                        + "19) Trigger 2 Test"
+                        + "19) Trigger 2 Test\n"
                         + "20) Import Data\n\n";
  
         
