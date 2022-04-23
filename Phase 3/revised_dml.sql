@@ -1132,7 +1132,6 @@ SELECT a.sid
 FROM (SELECT count(station_id) as sid FROM station_route GROUP BY station_id) as a
 WHERE a.sid > (select count(distinct route_id) from station_route);
 $$ LANGUAGE sql;
-SELECT * FROM station_all_pass();
 
 -- pass same but don't have the same stop
 CREATE OR REPLACE FUNCTION pass_same_stop_not_same(rt int)
@@ -1182,4 +1181,3 @@ BEGIN
     RETURN query SELECT * FROM out_table;
 END;
 $$ LANGUAGE plpgsql;
-SELECT * FROM find_availability('Monday','22:45','24:00');
