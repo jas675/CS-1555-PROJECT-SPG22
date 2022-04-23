@@ -82,7 +82,7 @@ public class Program {
                 else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
                 else if ( input.equals("12") ) { pass_through_percent_stations(); }
                 else if ( input.equals("13") ) { display_route_schedule(); }
-                else if ( input.equals("14") ) { updateCustomerList(); }///Stub
+                else if ( input.equals("14") ) { availability(); }///Stub
                 else if ( input.equals("15") ) { loginScreen();; }
                 else if ( admin && input.equals("16") ) { export(); }
                 else if ( admin && input.equals("17") ) { dropAll(); }
