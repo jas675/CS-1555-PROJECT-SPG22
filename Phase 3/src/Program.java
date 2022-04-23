@@ -76,15 +76,15 @@ public class Program {
             else if ( input.equals("7") ) { multi_line_routes(); } 
             else if ( input.equals("8") ) { ranked_trains(); }
             else if ( input.equals("9") ) { same_station_diff_stops(); } //In Progress (A)??
-            else if ( input.equals("10") ) { updateCustomerList(); }///Stub -- J
+            else if ( input.equals("10") ) { station_all_trains_pass_through(); }
             else if ( input.equals("11") ) { trains_that_does_not_stop_at_station(); }
             else if ( input.equals("12") ) { pass_through_percent_stations(); }
             else if ( input.equals("13") ) { display_route_schedule(); }
             else if ( input.equals("14") ) { updateCustomerList(); }///Stub
             else if ( input.equals("15") ) { loginScreen();; }
-            else if ( admin && input.equals("16") ) { updateCustomerList(); }///Stub
-            else if ( admin && input.equals("17") ) { updateCustomerList(); }///Stub
-            else if ( admin && input.equals("18") ) { updateCustomerList(); }///Stub
+            else if ( admin && input.equals("16") ) { export(); }
+            else if ( admin && input.equals("17") ) { dropAll(); }
+            else if ( admin && input.equals("18") ) { update_clock(); }
             else
             {
                 System.out.println("Invalid Input! Enter a number in the list provided. Try Again. ");
@@ -97,6 +97,418 @@ public class Program {
              
         }
 
+    }
+    
+    public static void export() throws SQLException, ClassNotFoundException
+    {
+        System.out.println("Export or View Table Data\n");
+
+        System.out.println("1. Clock\n2. Passenger\n3. Rail Line\n4. Reservation\n5. Route\n6. Station\n7. Station Line\n8. Station Route\n9. Train\n10. Train Schdule\n\n");
+
+        System.out.println("Pick any of the numbers above to view table data");
+
+        while (true)
+        {
+            System.out.print("Input: ");
+            String input = scanner.nextLine();
+
+            if ( input.equals("1") )
+            {
+                CallableStatement properCase = conn.prepareCall("{ ? = call get_clock_timestamp() }");
+                properCase.registerOutParameter(1, Types.TIMESTAMP);
+                properCase.execute();
+                Timestamp rReturn = properCase.getTimestamp(1);
+                properCase.close();
+
+                System.out.println( "The current pseudo Date and Time is : " + rReturn);
+                return;
+            }
+            else if ( input.equals("2") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Passenger";
+                ResultSet res1 = st.executeQuery(query1);
+                int id;
+                String fname, lname, s_addr, city, post;
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    fname = res1.getString(2);
+                    lname = res1.getString(3);
+                    s_addr = res1.getString(4);
+                    city =  res1.getString(5);
+                    post = res1.getString(6);
+                    System.out.println(id + " " + fname + " " + lname + " " + s_addr + " " + city + post);
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("3") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM RailLine";
+                ResultSet res1 = st.executeQuery(query1);
+                int id;
+                int speed_limit;
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    speed_limit = res1.getInt(2);
+
+                    System.out.println(id + " " + speed_limit);
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("4") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Reservation";
+                ResultSet res1 = st.executeQuery(query1);
+                int id, cust_id, sch_id;
+                Timestamp start, end;
+                float price;
+                boolean ticket, adj;
+
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    cust_id = res1.getInt(2);
+                    sch_id = res1.getInt(3);
+                    start = res1.getTimestamp(4);
+                    end =  res1.getTimestamp(5);
+                    price = res1.getFloat(6);
+                    ticket = res1.getBoolean(7);
+                    adj = res1.getBoolean(7);
+                    System.out.println(id + " " + cust_id + " " + sch_id + " " + start + " " + end + " " + price + ticket + adj );
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("5") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Route";
+                ResultSet res1 = st.executeQuery(query1);
+                int id;
+                while (res1.next()) {
+                    id = res1.getInt(1);
+
+                    System.out.println(id );
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("6") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Station";
+                ResultSet res1 = st.executeQuery(query1);
+                int id, delay;
+                String name, street, town, post;
+                Time start, end;
+
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    name = res1.getString(2);
+                    start = res1.getTime(4);
+                    end =  res1.getTime(5);
+                    delay = res1.getInt(6);
+                    street = res1.getString(6);
+                    town = res1.getString(7);
+                    post = res1.getString(7);
+                    System.out.println(id + " " + name  + " " + start + " " + end + " " + delay + street + town + post );
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("7") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Station_Line";
+                ResultSet res1 = st.executeQuery(query1);
+                int id, sta_id, dist, order;
+
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    sta_id = res1.getInt(2);
+                    dist = res1.getInt(3);
+                    order = res1.getInt(4);
+                    System.out.println(id + " " + sta_id + " " + dist + " " + order);
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("8") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Station_Route";
+                ResultSet res1 = st.executeQuery(query1);
+                int rt_id, st_id, order;
+                boolean stop;
+
+                while (res1.next()) {
+                    rt_id = res1.getInt(1);
+                    st_id = res1.getInt(2);
+                    stop = res1.getBoolean(3);
+                    order = res1.getInt(4);
+                    System.out.println(rt_id + " " + st_id + " " + stop + " " + order);
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("9") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Train";
+                ResultSet res1 = st.executeQuery(query1);
+                int id, seats, speed, ppk;
+                String name, dscrp;
+
+
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    name = res1.getString(2);
+                    dscrp = res1.getString(3);
+                    seats = res1.getInt(4);
+                    speed =  res1.getInt(5);
+                    ppk = res1.getInt(6);
+
+                    System.out.println(id + " " + name + " " + dscrp + " " + seats + " " + speed + " " + ppk );
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else if ( input.equals("10") )
+            {
+                int count = 0;
+                Statement st = conn.createStatement();
+                String query1 = "SELECT * FROM Trainschedule";
+                ResultSet res1 = st.executeQuery(query1);
+                int id, rt_id, tr_id;
+                Time time;
+                boolean disruption;
+                String day;
+
+                while (res1.next()) {
+                    id = res1.getInt(1);
+                    rt_id = res1.getInt(2);
+                    day = res1.getString(3);
+                    time = res1.getTime(4);
+                    tr_id =  res1.getInt(5);
+                    disruption = res1.getBoolean(7);
+                    System.out.println(id + " " + rt_id + " " + day + " " + time + " " + tr_id + " " + disruption);
+                    count++;
+
+                    if ( count == 10 )
+                    {
+                        count = 0;
+                        System.out.print("Enter [1] see next 10 results, [0] to stop: ");
+                        input = scanner.nextLine();
+
+                        System.out.println();
+
+                        if ( input.equals("0") ) { return; }
+                    }
+                }
+
+                return;
+            }
+            else 
+            {
+                System.out.println("Invalid input! Enter Numbers from 1 - 10 only. Try Again. ");
+            }
+        }
+        
+    }
+    
+    public static void station_all_trains_pass_through() throws SQLException, ClassNotFoundException
+    {
+        System.out.println("Printing the stations that all trains pass through\n");
+
+        CallableStatement properCase = conn.prepareCall("{ call get_routes_that_does_not_stop_at_station() }");
+
+        ResultSet rReturn = properCase.executeQuery();
+
+        while ( rReturn.next() )
+        {
+            int station_id = rReturn.getInt(1);
+            System.out.println(station_id);
+        }
+        properCase.close();                
+
+        return;
+    }
+    
+    public static void update_clock() throws SQLException, ClassNotFoundException
+    {
+        System.out.println("Update Clock Here:\n");
+
+        System.out.print("Enter new year YYYY: ");
+        String year = scanner.nextLine();
+        System.out.print("Enter new month MM: ");
+        String month = scanner.nextLine();
+        System.out.print("Enter new month DD: ");
+        String day = scanner.nextLine();
+        System.out.print("Enter new time HH: ");
+        String hour = scanner.nextLine();
+        System.out.print("Enter new time MM: ");
+        String minute = scanner.nextLine();
+        System.out.print("Enter new time SS: ");
+        String second = scanner.nextLine();
+
+
+        CallableStatement properCase = conn.prepareCall("{ ? = call get_routes_that_does_not_stop_at_station(?, ?, ?, ?, ?, ?) }");
+
+        properCase.registerOutParameter(1, Types.TIMESTAMP);
+        properCase.setString(2, year);
+        properCase.setString(3, month);
+        properCase.setString(4, day);
+        properCase.setString(5, hour);
+        properCase.setString(6, minute);
+        properCase.setString(7, second);
+
+        System.out.println("Date and Time Updated Successfully. The new Date and Time is " + properCase.getTimestamp(1));
+
+
+    }
+    
+    public static void dropAll() throws SQLException, ClassNotFoundException
+    {
+        Statement stmt = conn.createStatement();	
+
+        String sql = "DROP TABLE IF EXISTS CLOCK CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS PASSENGER CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS RAILLINE CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS RESERVATION CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS ROUTE CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS STATION CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS STATION_LINE CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS STATION_ROUTE CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS TRAIN CASCADE";
+        stmt.executeUpdate(sql);
+
+        sql = "DROP TABLE IF EXISTS TRAINSCHEDULE CASCADE";
+        stmt.executeUpdate(sql);
+
+        System.out.println("Successfully Dropped All The Table In The Schema\n");
     }
 
     public static void single_route_trip()throws SQLException, ClassNotFoundException
