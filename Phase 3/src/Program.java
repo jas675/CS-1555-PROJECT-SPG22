@@ -614,7 +614,7 @@ public class Program {
         String second = scanner.nextLine();
 
 
-        CallableStatement properCase = conn.prepareCall("{ ? = call get_routes_that_does_not_stop_at_station(?, ?, ?, ?, ?, ?) }");
+        CallableStatement properCase = conn.prepareCall("{ ? = call update_clock(?, ?, ?, ?, ?, ?)  }");
 
         properCase.registerOutParameter(1, Types.TIMESTAMP);
         properCase.setString(2, year);
@@ -623,6 +623,10 @@ public class Program {
         properCase.setString(5, hour);
         properCase.setString(6, minute);
         properCase.setString(7, second);
+        
+
+        properCase.execute();
+
 
         System.out.println("Date and Time Updated Successfully. The new Date and Time is " + properCase.getTimestamp(1));
 
