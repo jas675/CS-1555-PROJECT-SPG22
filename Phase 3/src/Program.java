@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.text.ParseException;
 
 import java.text.DateFormat;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 
 public class Program {
@@ -25,6 +26,8 @@ public class Program {
         props.setProperty("password", "postgres"); 
         conn = DriverManager.getConnection(url, props);
 
+        System.out.println("Connected to SWL");
+        //updateCustomerList();
 
         String commonList = "\nWelcome to the Costa Train Program.\n"
                         + "Select a number from the options below.\n"
@@ -51,7 +54,6 @@ public class Program {
         
  
         scanner = new Scanner(System.in);
-
         //Shows the login screen to validate username and password
         loginScreen();
 
