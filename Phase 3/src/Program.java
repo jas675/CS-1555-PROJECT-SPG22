@@ -18,7 +18,9 @@ public class Program {
 
     public static void main(String args[]) throws
             SQLException, ClassNotFoundException, ParseException, IOException {
- 
+        
+        
+
         //JBDC basic procedures
         Class.forName("org.postgresql.Driver");
         String url = "jdbc:postgresql://localhost:5432/";
@@ -1267,7 +1269,7 @@ public class Program {
         int id = 0;
         int count = -1;
 
-        System.out.println("View Routes That Does Not Stop At a Station. Input Only Accepts Station ID\n");
+        System.out.println("View Trains That Does Not Stop At a Station. Input Only Accepts Station ID\n");
 
         System.out.print("Enter Station ID: ");
         id = Integer.parseInt(scanner.nextLine());
@@ -1287,6 +1289,8 @@ public class Program {
             String train_name = rReturn.getString(2);
             String train_descrp = rReturn.getString(3);
             System.out.printf("%-6s %-7s %s %n", "" + train_id, train_name, train_descrp);
+
+            count = 1;
         }
         properCase.close(); 
         
