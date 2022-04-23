@@ -120,9 +120,9 @@ public class Program {
 
         System.out.println("Able to import data from appropriate files in repository");
 
-        String create_table = new String(Files.readAllBytes( Paths.get("../Phase 3/new_schema-v2.sql")));
-        String run_functions = new String(Files.readAllBytes( Paths.get("../Phase 3/revised_dml.sql")));
-        String inserts = new String(Files.readAllBytes( Paths.get("../Phase 3/data2.sql")));
+        String create_table = new String(Files.readAllBytes( Paths.get("./new_schema-v2.sql")));
+        String run_functions = new String(Files.readAllBytes( Paths.get("./revised_dml.sql")));
+        String inserts = new String(Files.readAllBytes( Paths.get("./data2.sql")));
 
         Statement stmt = conn.createStatement();	
 
@@ -242,7 +242,6 @@ public class Program {
                     id = res1.getInt(1);
                     speed_limit = res1.getInt(2);
 
-                    System.out.println(id + " " + speed_limit);
                     System.out.printf("%-6s %s %n", "" + id, "" + speed_limit);
                     count++;
 
@@ -323,7 +322,7 @@ public class Program {
                     if ( count == -1)
                     {
                         count = 0;
-                        System.out.printf("%s", "ROUTE ID");
+                        System.out.printf("%s %n", "ROUTE ID");
                     }
 
                     id = res1.getInt(1);
